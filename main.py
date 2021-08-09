@@ -39,7 +39,26 @@ class Cloud:
         self.x += self.current_dir
         screen.blit(self.image, (self.x, self.y)) # show cloud in  x, y position
 
+class Text:
+    def __init__(self, text, font_size, position):
+        self.text = text # text to display
+        self.font_family = f'{assets}/font.ttf' # font path
+        self.font_size = font_size # font size
+        self.text_color = (56,61,61) # text color
+        self.font = pygame.font.Font(self.font_family, self.font_size) # font
+        self.img = self.font.render(text, True, self.text_color) # rendered text
+        self.position = position # text position
+        print(f'Created text - {text}') # info log
+
+    def update(self):
+        screen.blit(self.img, self.position) # update text to show
+
+    def change_text(self, text):
+        self.text = text # rewrite displayed text
+
 def main():
+    game = True
+
     dino = Dino() # creating dino
     dino_size = 100 # dino image size (px)
     dino_x = (width // 2) - (dino_size // 2) # screen center
@@ -47,22 +66,26 @@ def main():
 
     clouds = [] # clouds list
     cloud_size = 100 # cloud image size (px)
+
+    score = Text('Score: 0', 20, (10, 10)) # scores text
+
     for i in range(random.randint(5, 8)): # create random count of clouds
         clouds.append(Cloud(
             random.randint(0, (width-cloud_size)),     # x
             random.randint(20, (height-cloud_size-50)) # y
         ))
 
-    while 1:
+    while game:
         for e in pygame.event.get():
             if e.type == pygame.QUIT: # exit on window close
-                pygame.quit()
-                quit()
+                game = False
         
         screen.fill(bg_color) # background color
         dino.move(dino_x, dino_y) # move dino
         for cloud in clouds: # loop all clouds
             cloud.move() # move cloud to current possible direction
+        score.update() # refresh scores
+
         update_frame()
 
 def update_frame():
