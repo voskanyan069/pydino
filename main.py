@@ -89,6 +89,11 @@ class DinoPart:
         self.y += self.speed # move down the part
 
         if self.y >= height: # if touching bottom border
+            if scores <= 10:
+                scores = 0 # set scores to zero
+            else:
+                scores -= 10 # minus scores
+            scores_text.change_text(f'Score: {scores}') # update scores text
             self.reset() # delete this and create new part
         if self.x > dx and self.x < dw: # x is between dino start and end
             if self.y > dy and self.y < dh: # y is between dino top and bottom
