@@ -11,9 +11,9 @@ screen = pygame.display.set_mode(size) # init screen
 bg_color = (74,236,239) # background color
 assets = './assets' # assets directory
 
-#app_icon = pygame.image.load(f'{assets}/icon.jpg') # find icon image
+app_icon = pygame.image.load(f'{assets}/icon.png') # find icon image
 pygame.display.set_caption('Dino') # set window title
-#pygame.display.set_icon(app_icon) # set app icon
+pygame.display.set_icon(app_icon) # set app icon
 
 game = True # is game running
 scores = 0 # game scores
@@ -139,6 +139,24 @@ class DinoPart(Part):
         self.scores_text.change_text(f'Score: {scores}') # update scores text
         self.reset() # delete this and create new part
 
+class DamageFood(Part):
+    def __init__(self, dino, scores_text, health_text):
+        super(DamageFood, self).__init__ (dino, scores_text, health_text)
+        self.image = pygame.image.load(f'{assets}/damage.png') # cloud asset
+
+    def on_part_bottom(self):
+        self.reset() # delete this and create new part
+
+    def on_part_eat(self):
+        global scores
+        global health
+
+        scores -= 5 # minus scores
+        health -= 1 # minus health
+        self.scores_text.change_text(f'Score: {scores}') # update scores text
+        self.health_text.change_text(f'Health: {health}') # update scores text
+        self.reset() # delete this and create new part
+
 class Text:
     def __init__(self, text, font_size, position):
         self.text = text # text to display
@@ -184,8 +202,10 @@ def main():
 
     # parts
     parts = []
-    for i in range(random.randint(2, 5)):
+    for i in range(random.randint(2, 4)):
         parts.append(DinoPart(dino, scores_text, health_text))
+    for i in range(random.randint(1, 2)):
+        parts.append(DamageFood(dino, scores_text, health_text))
 
     # launch new threads
     _thread.start_new_thread(update_time, ()) # play time thread
