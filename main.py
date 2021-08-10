@@ -11,8 +11,13 @@ screen = pygame.display.set_mode(size) # init screen
 bg_color = (74,236,239) # background color
 assets = './assets' # assets directory
 
-game = True
-play_time = 0
+#app_icon = pygame.image.load(f'{assets}/icon.jpg') # find icon image
+pygame.display.set_caption('Dino') # set window title
+#pygame.display.set_icon(app_icon) # set app icon
+
+game = True # is game running
+scores = 0 # game scores
+play_time = 0 # game play time seconds
 
 class Dino:
     def __init__(self, x, y):
@@ -31,7 +36,7 @@ class Dino:
             self.x -= self.speed
         elif direction == 1 and self.x <= width-50: # moved right
             self.x += self.speed
-        print(f'Dino moved to [{self.x};{self.y}]')
+        print(f'Dino moved to [{self.x};{self.y}]') # info log
 
     def add_speed(self, speed):
         self.speed += speed # add dino speed
@@ -43,6 +48,9 @@ class Dino:
 
     def show(self):
         screen.blit(self.image, (self.x,self.y)) # show dino in x, y position
+
+    def get_params(self):
+        return self.x-20, self.y-50, self.x+50, self.y+100 # x, y, w, h
 
 class Cloud:
     def __init__(self, x, y):
@@ -62,8 +70,43 @@ class Cloud:
             self.current_dir = self.direction['right']
         elif self.x >= (width - 105): # if touch right border
             self.current_dir = self.direction['left']
-        self.x += self.current_dir
+        self.x += self.current_dir # move to current direction
         screen.blit(self.image, (self.x, self.y)) # show cloud in  x, y position
+
+class DinoPart:
+    def __init__(self):
+        self.speed = 0.3 # part speed
+        self.image = pygame.image.load(f'{assets}/part.png') # cloud asset
+        self.part_w = 30 # part width
+        self.sleep = random.randint(1, 5) # sleep time
+        self.x = random.randint(0, (width-self.part_w)) # start x point
+        self.y = 0 # start y point
+        print(f'Dino part created at {self.x}') # info log
+
+    def move(self, dino, scores_text):
+        global scores
+        dx, dy, dw, dh = dino.get_params() # get geometry parameters of dino
+        self.y += self.speed # move down the part
+
+        if self.y >= height: # if touching bottom border
+            self.reset() # delete this and create new part
+        if self.x > dx and self.x < dw: # x is between dino start and end
+            if self.y > dy and self.y < dh: # y is between dino top and bottom
+                scores += 5 # append scores
+                scores_text.change_text(f'Score: {scores}') # update scores text
+                self.reset() # delete this and create new part
+        screen.blit(self.image, (self.x,self.y)) # show part in x, y position
+
+    def reset(self):
+        self.x = random.randint(0, (width-self.part_w)) # new random x position
+        self.y = 0 # to window top
+        self.sleep = random.randint(1, 5) # new random sleep time
+
+    def set_sleep(self, new_sleep):
+        self.sleep = new_sleep # override this part sleep time
+
+    def get_sleep(self):
+        return self.sleep # get this part sleep time
 
 class Text:
     def __init__(self, text, font_size, position):
@@ -104,8 +147,11 @@ def main():
         ))
 
     # texts
-    score = Text('Score: 0', 22, (10, 10)) # scores text
-    time = Text('Time: 0', 22, (10, 40)) # time text
+    scores_text = Text('Score: 0', 22, (10, 10)) # scores text
+    time_text = Text('Time: 0', 22, (10, 40)) # time text
+
+    # parts
+    part = DinoPart()
 
     # launch new threads
     _thread.start_new_thread(update_time, ()) # play time thread
@@ -126,17 +172,18 @@ def main():
             dino.move(0)
         elif keys[pygame.K_RIGHT]: # ->
             dino.move(1)
-        
         # update frame
         screen.fill(bg_color) # update background color
         dino.show() # move dino
         for cloud in clouds: # loop all clouds
             cloud.move() # move cloud to current possible direction
-        score.update() # refresh scores
-        time.update() # refresh time
-        time.change_text(f'Time: {play_time}s') # update time text
+        part.move(dino, scores_text) # start part movement
+        
+        scores_text.update() # refresh scores
+        time_text.update() # refresh time
+        time_text.change_text(f'Time: {play_time}s') # update time text
 
-        update_frame()
+        update_frame() # new frame
 
 def update_frame():
     pygame.display.update() # update frame
@@ -154,7 +201,7 @@ def update_dino_speed(dino):
     global game
     count = 0
 
-    while game and count <= 10:
+    while game and count <= 10: # repeat 10 times
         pygame.time.wait(10000) # sleep for 10 sec
         dino.add_speed(0.1) # add dino speed by 0.1
         count += 1 # add count by 1
