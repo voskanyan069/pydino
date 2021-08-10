@@ -18,6 +18,7 @@ pygame.display.set_caption('Dino') # set window title
 game = True # is game running
 scores = 0 # game scores
 play_time = 0 # game play time seconds
+health = 5 # game healths
 
 class Dino:
     def __init__(self, x, y):
@@ -73,45 +74,70 @@ class Cloud:
         self.x += self.current_dir # move to current direction
         screen.blit(self.image, (self.x, self.y)) # show cloud in  x, y position
 
-class DinoPart:
-    def __init__(self):
-        self.speed = 0.3 # part speed
-        self.image = pygame.image.load(f'{assets}/part.png') # cloud asset
+class Part:
+    def __init__(self, dino, scores_text, health_text):
+        self.dino = dino # dino
+        self.scores_text = scores_text # scores text
+        self.health_text = health_text # health text
+        self.speed = 0.3 # part start speed
         self.part_w = 30 # part width
-        self.sleep = random.randint(1, 5) # sleep time
         self.x = random.randint(0, (width-self.part_w)) # start x point
         self.y = 0 # start y point
-        print(f'Dino part created at {self.x}') # info log
-
-    def move(self, dino, scores_text):
-        global scores
-        dx, dy, dw, dh = dino.get_params() # get geometry parameters of dino
-        self.y += self.speed # move down the part
-
-        if self.y >= height: # if touching bottom border
-            if scores <= 10:
-                scores = 0 # set scores to zero
-            else:
-                scores -= 10 # minus scores
-            scores_text.change_text(f'Score: {scores}') # update scores text
-            self.reset() # delete this and create new part
-        if self.x > dx and self.x < dw: # x is between dino start and end
-            if self.y > dy and self.y < dh: # y is between dino top and bottom
-                scores += 5 # append scores
-                scores_text.change_text(f'Score: {scores}') # update scores text
-                self.reset() # delete this and create new part
-        screen.blit(self.image, (self.x,self.y)) # show part in x, y position
+        self.dx, self.dy, self.dw, self.dh = 0, 0, 0, 0
+        print(f'Part was created at {self.x}') # info log
 
     def reset(self):
         self.x = random.randint(0, (width-self.part_w)) # new random x position
         self.y = 0 # to window top
-        self.sleep = random.randint(1, 5) # new random sleep time
 
-    def set_sleep(self, new_sleep):
-        self.sleep = new_sleep # override this part sleep time
+    def move(self):
+        global scores
+        global health
+        self.dx, self.dy, self.dw, self.dh = \
+                self.dino.get_params() # get geometry params of dino
+        self.y += self.speed # move down the part
+        
+        # part is touching bottom border
+        if self.y >= height:
+            self.on_part_bottom()
+        # x is between dino start and end
+        if self.x > self.dx and self.x < self.dw:
+            # y is between dino top and bottom
+            if self.y > self.dy and self.y < self.dh:
+                self.on_part_eat() # part touching dino
 
-    def get_sleep(self):
-        return self.sleep # get this part sleep time
+        screen.blit(self.image, (self.x,self.y)) # show part in x, y position
+
+    def on_part_bottom(self):
+        pass
+
+    def on_part_eat(self):
+        pass
+
+class DinoPart(Part):
+    def __init__(self, dino, scores_text, health_text):
+        super(DinoPart, self).__init__ (dino, scores_text, health_text)
+        self.image = pygame.image.load(f'{assets}/part.png') # cloud asset
+
+    def on_part_bottom(self):
+        global scores
+        global health
+
+        if scores <= 10: # if scores lower or equal 10
+            scores = 0 # set scores to zero
+        else: # if scores greather than 10
+            scores -= 10 # minus scores
+        health -= 1
+        self.scores_text.change_text(f'Score: {scores}') # update scores text
+        self.health_text.change_text(f'Health: {health}') # update scores text
+        self.reset() # delete this and create new part
+
+    def on_part_eat(self):
+        global scores
+
+        scores += 5 # append scores
+        self.scores_text.change_text(f'Score: {scores}') # update scores text
+        self.reset() # delete this and create new part
 
 class Text:
     def __init__(self, text, font_size, position):
@@ -154,9 +180,12 @@ def main():
     # texts
     scores_text = Text('Score: 0', 22, (10, 10)) # scores text
     time_text = Text('Time: 0', 22, (10, 40)) # time text
+    health_text = Text('Health: 5', 22, (10, 70)) # health text
 
     # parts
-    part = DinoPart()
+    parts = []
+    for i in range(random.randint(2, 5)):
+        parts.append(DinoPart(dino, scores_text, health_text))
 
     # launch new threads
     _thread.start_new_thread(update_time, ()) # play time thread
@@ -182,10 +211,12 @@ def main():
         dino.show() # move dino
         for cloud in clouds: # loop all clouds
             cloud.move() # move cloud to current possible direction
-        part.move(dino, scores_text) # start part movement
+        for part in parts: # loop all parts
+            part.move() # start part movement
         
         scores_text.update() # refresh scores
         time_text.update() # refresh time
+        health_text.update() # refresh time
         time_text.change_text(f'Time: {play_time}s') # update time text
 
         update_frame() # new frame
