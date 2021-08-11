@@ -25,7 +25,7 @@ scores = 0 # game scores
 high_score = 0 # all time high score
 play_time = 0 # game play time seconds
 health = 5 # game healths
-data = 0
+data = 0 # temp start value for data
 
 class Dino:
     def __init__(self, x, y):
@@ -132,9 +132,9 @@ class DinoPart(Part):
         global health
 
         if scores <= 10: # if scores lower or equal 10
-            scores -= 0 # set scores to zero
+            scores = 0 # set scores to zero
         else: # if scores greather than 10
-            scores += 10 # minus scores
+            scores -= 10 # minus scores
         health -= 1 # minus health by 1
         if health <= 0: # if no many healths
             end_game()
@@ -162,7 +162,10 @@ class DamageFood(Part):
         global scores
         global health
 
-        scores += 5 # minus scores
+        if scores <= 10: # if scores lower or equal 10
+            scores = 0 # set scores to zero
+        else: # if scores greather than 10
+            scores -= 5 # minus scores
         health -= 1 # minus health
         if health <= 0: # if no many healths
             end_game()
@@ -353,6 +356,7 @@ def end_game():
     if high_score < scores: # if last game scores greather than high score
         data.write_data('high_score', scores) # rewrite high score
         high_score = scores # update high score
+    scores = 0
 
 def update_frame():
     pygame.display.update() # update frame
