@@ -1,20 +1,23 @@
 #!./venv/bin/python3
 
-import pygame
 import random
 import _thread
+import pygame
+import pygame_widgets as pw
+from pygame_widgets.button import Button
 
 pygame.init() # init pygame
 
 size = width, height = 640, 400 # screen size
 screen = pygame.display.set_mode(size) # init screen
-bg_color = (74,236,239) # background color
+bg_color = (142,202,230) # background color
 assets = './assets' # assets directory
 
 app_icon = pygame.image.load(f'{assets}/icon.png') # find icon image
 pygame.display.set_caption('Dino') # set window title
 pygame.display.set_icon(app_icon) # set app icon
 
+menu = True # is menu showing
 game = True # is game running
 scores = 0 # game scores
 play_time = 0 # game play time seconds
@@ -120,6 +123,7 @@ class DinoPart(Part):
         self.image = pygame.image.load(f'{assets}/part.png') # cloud asset
 
     def on_part_bottom(self):
+        global game
         global scores
         global health
 
@@ -127,7 +131,10 @@ class DinoPart(Part):
             scores = 0 # set scores to zero
         else: # if scores greather than 10
             scores -= 10 # minus scores
-        health -= 1
+        health -= 1 # minus health by 1
+        if health <= 0: # if no many healths
+            game = False # end the game
+            show_menu() # show the menu
         self.scores_text.change_text(f'Score: {scores}') # update scores text
         self.health_text.change_text(f'Health: {health}') # update scores text
         self.reset() # delete this and create new part
@@ -153,6 +160,9 @@ class DamageFood(Part):
 
         scores -= 5 # minus scores
         health -= 1 # minus health
+        if health <= 0: # if no many healths
+            game = False # end the game
+            show_menu() # show the menu
         self.scores_text.change_text(f'Score: {scores}') # update scores text
         self.health_text.change_text(f'Health: {health}') # update scores text
         self.reset() # delete this and create new part
@@ -175,10 +185,66 @@ class Text:
         self.text = text # rewrite displayed text
         self.img = self.font.render(text, True, self.text_color) # rendered text
 
+class MyButton:
+    def __init__(self, btn_y, text, on_click):
+        btn_w = 150 # button width
+        btn_h = 50  # button height
+        btn_x = (width // 2) - (btn_w // 2) # center button by x
+        btn_radius = 10 # button radius
+        color_1 = (33,158,188) # button default color
+        color_2 = (4,107,159)  # button hover color
+        color_3 = (3,81,119)   # button click color
+
+        self.button = Button( # create button
+            screen, btn_x, btn_y, btn_w, btn_h, text=text, fontSize=40,
+            inactiveColour=color_1, hoverColour=color_2,
+            pressedColour=color_3, radius=btn_radius,
+            onClick=on_click
+        )
+
 def main():
+    show_menu() # open menu
+
+def show_menu():
+    global menu
+    menu = True
+
+    start_btn = MyButton(120, 'Play', on_start_click).button # play button init
+    exit_btn = MyButton(180, 'Exit', on_exit_click).button # exit button init
+    while menu:
+        events = pygame.event.get()
+        for e in events:
+            if e.type == pygame.QUIT: # exit on window close
+                menu = False
+
+        keys = pygame.key.get_pressed() # pressed keys
+        # close on esc
+        if keys[pygame.K_ESCAPE]:
+            menu = False
+
+        screen.fill(bg_color) # update background color
+        pw.update(events) # update pygame_widgetes
+
+        update_frame() # update frame
+
+def on_start_click():
+    global menu
+    menu = False # stop menu
+    play() # start game
+
+def on_exit_click():
+    # close the window
+    pygame.quit()
+    quit()
+
+def play():
     # game
     global game
+    global health
     global play_time
+    game = True
+    health = 5
+    play_time = 0
 
     # dino
     dino_h = 100 # dino image height (px)
