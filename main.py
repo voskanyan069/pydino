@@ -3,6 +3,8 @@
 import json
 import random
 import _thread
+import sys, getopt
+
 import pygame
 import pygame_widgets as pw
 from pygame_widgets.button import Button
@@ -228,9 +230,27 @@ class File:
             file.close() # close data file
         print(f'Data was writen [{new}]') # info log
 
-def main():
+def main(argv):
     global data
     global high_score
+
+    try:
+        opts, args = getopt.getopt(argv,"hc",["help","clear"]) # get args
+    except getopt.GetoptError: # if error on args getting
+        print('\n\nUsage: dino.py -h/--help | to show help message')
+        sys.exit(2) # exit app with error code 2
+    for opt, arg in opts:
+        if opt == '-h' or opt == '--help': # -h/--help
+            print('\n\n') # two lines
+            print('Dino'.center(80)) # print app name in terminal center
+            print('\t-h/--help  - Show this help message') # show help usage
+            print('\t-c/--clear - Clear data file') # show clear usage
+            sys.exit(0) # exit without errors
+        elif opt == "-c" or opt == "--clear": # -c/--clear
+            datafile = open(f'{assets}/.data.json', 'w') # open file for write
+            datafile.write('{\n\t"data": {\n\t}\n}') # write this to file
+            datafile.close() # close file
+            sys.exit(0) # exit without errors
 
     data = File(data_path) # file of data
     try:
@@ -380,4 +400,4 @@ def update_dino_speed(dino):
         count += 1 # add count by 1
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:]) # send command-line arguments as parameter
