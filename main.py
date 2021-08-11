@@ -1,5 +1,6 @@
 #!./venv/bin/python3
 
+import json
 import random
 import _thread
 import pygame
@@ -12,6 +13,7 @@ size = width, height = 640, 400 # screen size
 screen = pygame.display.set_mode(size) # init screen
 bg_color = (142,202,230) # background color
 assets = './assets' # assets directory
+data_path = f'{assets}/.data.json' # data file path
 
 app_icon = pygame.image.load(f'{assets}/icon.png') # find icon image
 pygame.display.set_caption('Dino') # set window title
@@ -20,8 +22,10 @@ pygame.display.set_icon(app_icon) # set app icon
 menu = True # is menu showing
 game = True # is game running
 scores = 0 # game scores
+high_score = 0 # all time high score
 play_time = 0 # game play time seconds
 health = 5 # game healths
+data = 0
 
 class Dino:
     def __init__(self, x, y):
@@ -33,7 +37,7 @@ class Dino:
             'left': -1 * self.speed,
             'right': self.speed
         }
-        print('Created dino in [{x};{y}]') # info log
+        print(f'Created dino in [{x};{y}]') # info log
 
     def move(self, direction):
         if direction == 0 and self.x >= 5: # moved left
@@ -128,12 +132,12 @@ class DinoPart(Part):
         global health
 
         if scores <= 10: # if scores lower or equal 10
-            scores = 0 # set scores to zero
+            scores -= 0 # set scores to zero
         else: # if scores greather than 10
-            scores -= 10 # minus scores
+            scores += 10 # minus scores
         health -= 1 # minus health by 1
         if health <= 0: # if no many healths
-            game = False # end the game
+            end_game()
             show_menu() # show the menu
         self.scores_text.change_text(f'Score: {scores}') # update scores text
         self.health_text.change_text(f'Health: {health}') # update scores text
@@ -158,10 +162,10 @@ class DamageFood(Part):
         global scores
         global health
 
-        scores -= 5 # minus scores
+        scores += 5 # minus scores
         health -= 1 # minus health
         if health <= 0: # if no many healths
-            game = False # end the game
+            end_game()
             show_menu() # show the menu
         self.scores_text.change_text(f'Score: {scores}') # update scores text
         self.health_text.change_text(f'Health: {health}') # update scores text
@@ -202,7 +206,34 @@ class MyButton:
             onClick=on_click
         )
 
+class File:
+    def __init__(self, filename):
+        self.filename = filename
+
+    def read_data(self, key):
+        with open(self.filename, mode='r') as file: # read file content
+            data = json.load(file) # save file data to variable
+            return data['data'][key] # get data value by key
+    
+    def write_data(self, key, value):
+        new = {key: value} # create new object
+        with open(self.filename, mode='r') as file: # read file content
+            data = json.load(file) # save file data to variable
+        with open(self.filename, mode='w') as file: # open file for write
+            data['data'][key] = value # append data in datafile
+            json.dump(data, file, indent=4) # rewrite json file
+            file.close() # close data file
+        print(f'Data was writen [{new}]') # info log
+
 def main():
+    global data
+    global high_score
+
+    data = File(data_path) # file of data
+    try:
+        high_score = data.read_data('high_score') # read from data file
+    except:
+        high_score = 0 # if not find from data file
     show_menu() # open menu
 
 def show_menu():
@@ -211,6 +242,8 @@ def show_menu():
 
     start_btn = MyButton(120, 'Play', on_start_click).button # play button init
     exit_btn = MyButton(180, 'Exit', on_exit_click).button # exit button init
+    high_score_text = Text(f'High-Score: {high_score}', 30, ((width//2)-70,240))
+
     while menu:
         events = pygame.event.get()
         for e in events:
@@ -223,6 +256,7 @@ def show_menu():
             menu = False
 
         screen.fill(bg_color) # update background color
+        high_score_text.update()
         pw.update(events) # update pygame_widgetes
 
         update_frame() # update frame
@@ -242,7 +276,9 @@ def play():
     global game
     global health
     global play_time
+    # reset game options
     game = True
+    scores = 0
     health = 5
     play_time = 0
 
@@ -306,6 +342,17 @@ def play():
         time_text.change_text(f'Time: {play_time}s') # update time text
 
         update_frame() # new frame
+
+def end_game():
+    global game
+    global high_score
+    global scores
+    global data
+
+    game = False # stop game window
+    if high_score < scores: # if last game scores greather than high score
+        data.write_data('high_score', scores) # rewrite high score
+        high_score = scores # update high score
 
 def update_frame():
     pygame.display.update() # update frame
