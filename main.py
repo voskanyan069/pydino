@@ -24,6 +24,7 @@ pygame.display.set_icon(app_icon) # set app icon
 menu = True # is menu showing
 game = True # is game running
 mouse_play = True # is game runned in mouse mode
+is_dino_die = True # is dino die in game
 scores = 0 # game scores
 high_score = 0 # all time high score
 play_time = 0 # game play time seconds
@@ -31,6 +32,7 @@ health = 5 # game healths
 data = 0 # temp start value for data
 font_family = f'{assets}/font.otf' # font path
 mouse_control_btn = 0 # define the button for global use
+is_dino_die_control_btn = 0 # define the button for global use
 
 class Dino:
     def __init__(self, x, y):
@@ -139,18 +141,20 @@ class DinoPart(Part):
     def on_part_bottom(self):
         global game
         global scores
-        global health
+        global is_dino_die
 
         if scores <= 10: # if scores lower or equal 10
             scores = 0 # set scores to zero
         else: # if scores greather than 10
             scores -= 10 # minus scores
-        health -= 1 # minus health by 1
-        if health <= 0: # if no many healths
-            end_game()
-            show_menu() # show the menu
+        if is_dino_die: # if is_dino_die option turned on
+            global health
+            health -= 1 # minus health by 1
+            if health <= 0: # if no many healths
+                end_game() # end game
+                show_menu() # show the menu
+            self.health_text.change_text(f'Health: {health}') # update health
         self.scores_text.change_text(f'Score: {scores}') # update scores text
-        self.health_text.change_text(f'Health: {health}') # update scores text
         self.reset() # delete this and create new part
 
     def on_part_eat(self):
@@ -170,18 +174,21 @@ class DamageFood(Part):
 
     def on_part_eat(self):
         global scores
-        global health
+        global is_dino_die
 
-        if scores <= 10: # if scores lower or equal 10
+        if scores <= 25: # if scores lower or equal 10
             scores = 0 # set scores to zero
         else: # if scores greather than 10
-            scores -= 5 # minus scores
-        health -= 1 # minus health
-        if health <= 0: # if no many healths
-            end_game()
-            show_menu() # show the menu
+            scores -= 25 # minus scores
+        if is_dino_die: # if is_dino_die option turned on
+            global health
+
+            health -= 1 # minus health
+            if health <= 0: # if no many healths
+                end_game() # end game
+                show_menu() # show the menu
+            self.health_text.change_text(f'Health: {health}') # update health
         self.scores_text.change_text(f'Score: {scores}') # update scores text
-        self.health_text.change_text(f'Health: {health}') # update scores text
         self.reset() # delete this and create new part
 
 class Text:
@@ -291,7 +298,10 @@ def main(argv):
 
 def show_menu():
     global menu
+    global mouse_play
     global mouse_control_btn
+    global is_dino_die
+    global is_dino_die_control_btn
     menu = True
 
     # menu buttons initialization
@@ -300,6 +310,9 @@ def show_menu():
     high_score_text = Text(f'High-Score: {high_score}', 24, ((width//2)-65,240))
     mouse_control_btn = MyButton((width-150,10,140,30),
         f'Mouse control: {mouse_play}', on_mouse_control_click,
+        font_size=18, radius=5, is_center=False)
+    is_dino_die_control_btn = MyButton((width-150,50,140,30),
+        f'Dino death: {is_dino_die}', on_death_control_click,
         font_size=18, radius=5, is_center=False)
 
     while menu:
@@ -336,9 +349,17 @@ def on_mouse_control_click():
     global mouse_play
     global mouse_control_btn
 
-    mouse_play = not mouse_play # reverse mouse control optrion
+    mouse_play = not mouse_play # reverse mouse control option
     mouse_control_btn.set_text(f'Mouse control: {mouse_play}') # change text
     print(f'Mouse control switched to {mouse_play}') # info log
+
+def on_death_control_click():
+    global is_dino_die
+    global is_dino_die_control_btn
+
+    is_dino_die = not is_dino_die # reverse death option
+    is_dino_die_control_btn.set_text(f'Dino death: {is_dino_die}') # change text
+    print(f'Dino death switched to {is_dino_die}') # info log
 
 def play():
     # game
@@ -346,6 +367,7 @@ def play():
     global health
     global play_time
     global mouse_play
+    global is_dino_die
 
     # reset game options
     game = True
@@ -371,7 +393,10 @@ def play():
     # texts
     scores_text = Text('Score: 0', 22, (10, 10)) # scores text
     time_text = Text('Time: 0', 22, (10, 40)) # time text
-    health_text = Text('Health: 5', 22, (10, 70)) # health text
+    if is_dino_die:
+        health_text = Text('Health: 5', 22, (10, 70)) # health text
+    else:
+        health_text = None # health text temp value for parts
 
     # parts
     parts = [] # list of parts
@@ -414,7 +439,8 @@ def play():
         # refresh texts
         scores_text.update() # refresh scores
         time_text.update() # refresh time
-        health_text.update() # refresh time
+        if is_dino_die:
+            health_text.update() # refresh health
         time_text.change_text(f'Time: {play_time}s') # update time text
 
         update_frame() # new frame
