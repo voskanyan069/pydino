@@ -374,6 +374,8 @@ def play():
     # game
     global game
     global health
+    global scores
+    global high_score
     global play_time
     global mouse_play
     global is_dino_die
@@ -423,11 +425,15 @@ def play():
         for e in pygame.event.get():
             if e.type == pygame.QUIT: # exit on window close
                 game = False
+            if high_score < scores:
+                data.write_data('high_score', scores) # rewrite high score
 
         keys = pygame.key.get_pressed() # pressed keys
         # close on esc
         if keys[pygame.K_ESCAPE]:
             game = False
+            if high_score < scores:
+                data.write_data('high_score', scores) # rewrite high score
         # movement
         if mouse_play:
             mx, _ = pygame.mouse.get_pos() # get current mouse position
