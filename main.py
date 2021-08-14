@@ -4,6 +4,7 @@ import json
 import random
 import _thread
 import sys, getopt
+from colorama import Fore, Style
 
 import pygame
 import pygame_widgets as pw
@@ -253,19 +254,27 @@ class File:
         self.filename = filename # set filename
 
     def read_data(self, key):
-        with open(self.filename, mode='r') as file: # read file content
-            data = json.load(file) # save file data to variable
-            return data['data'][key] # get data value by key
+        try:
+            with open(self.filename, mode='r') as file: # read file content
+                data = json.load(file) # save file data to variable
+                return data['data'][key] # get data value by key
+        except FileNotFoundError as e: # if file not exist
+            print(f'{Fore.RED} [ERROR] {self.filename} file not found \
+                    {Style.RESET_ALL}') # error
     
     def write_data(self, key, value):
         new = {key: value} # create new object
-        with open(self.filename, mode='r') as file: # read file content
-            data = json.load(file) # save file data to variable
-        with open(self.filename, mode='w') as file: # open file for write
-            data['data'][key] = value # append data in datafile
-            json.dump(data, file, indent=4) # rewrite json file
-            file.close() # close data file
-        print(f'Data was writen [{new}]') # info log
+        try:
+            with open(self.filename, mode='r') as file: # read file content
+                data = json.load(file) # save file data to variable
+            with open(self.filename, mode='w') as file: # open file for write
+                data['data'][key] = value # append data in datafile
+                json.dump(data, file, indent=4) # rewrite json file
+                file.close() # close data file
+            print(f'Data was writen [{new}]') # info log
+        except FileNotFoundError as e: # if file not exist
+            print(f'{Fore.RED} [ERROR] {self.filename} file not found \
+                    {Style.RESET_ALL}') # error
 
 def main(argv):
     global data
