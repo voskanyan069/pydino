@@ -1,5 +1,7 @@
 #!./venv/bin/python3
 
+import os
+import re
 import json
 import random
 import _thread
@@ -15,7 +17,9 @@ pygame.init() # init pygame
 size = width, height = 640, 400 # screen size
 screen = pygame.display.set_mode(size) # init screen
 bg_color = (142,202,230) # background color
-assets = './assets' # assets directory
+fullpath = os.path.realpath(__file__) # get this script static path
+fullpath = re.sub(r'\/(?!.*\/).*py', '', fullpath) # remove filename from path
+assets = f'{fullpath}/assets' # assets directory
 data_path = f'{assets}/.data.json' # data file path
 
 app_icon = pygame.image.load(f'{assets}/icon.png') # find icon image
