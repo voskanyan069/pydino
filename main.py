@@ -38,6 +38,7 @@ play_time = 0 # game play time seconds
 health = 5 # game healths
 data = 0 # temp start value for data
 skin_index = 0 # default index of dino skins
+temp_skin_index = 0 # temp index for changing in menu but not saving
 font_family = f'{assets}/font.otf' # font path
 mouse_control_btn = 0 # define the button for global use
 is_dino_die_control_btn = 0 # define the button for global use
@@ -46,6 +47,8 @@ skins_btn = 0 # menu skins button
 exit_btn = 0 # menu exit button
 skin_save_btn = 0 # skin menu save button
 skin_cancel_btn = 0 # skin menu cancel button
+skin_select_larrow = 0 # skin select left arrow image
+skin_select_rarrow = 0 # skin select right arrow image
 dino_skins = {} # dino skins dict {name: path}
 dino_skins_path = glob.glob(f'{assets}/dino*') # all skins path
 
@@ -62,7 +65,9 @@ print(dino_skins)
 
 class Dino:
     def __init__(self, x, y):
-        self.image = pygame.image.load(f'{assets}/dino_classic.png')
+        path = list(dino_skins.values())[skin_index]
+        print(path)
+        self.image = pygame.image.load(path)
         self.speed = 0.2 # dino speed
         self.x = x # dino x
         self.y = y # dino y
@@ -288,10 +293,27 @@ class SkinMenuDino:
         global skin_index
         global dino_skins
 
-        title = list(dino_skins.keys())[skin_index] # title of the current skin
+        title = list(dino_skins.keys()) \
+                [temp_skin_index] # title of the current skin
         path = dino_skins[title] # asset path of dino skin
         img = pygame.image.load(path)
         screen.blit(img, (self.x,self.y))
+
+class SkinMenuArrow:
+    def __init__(self, direction, on_click):
+        path = f'{assets}/arrow_{direction}.png'
+        self.dir = direction
+        self.img = pygame.image.load(path)
+        self.btn_size = 75
+        if self.dir == 'left':
+            self.x = self.btn_size
+        else:
+            self.x = width - (self.btn_size * 2)
+        self.y = (height // 2) - (self.btn_size // 1.2)
+        self.button = Button( # create button
+            screen, self.x, self.y, self.btn_size, self.btn_size,
+            radius = 100, onClick=on_click, image=self.img
+        )
 
 class File:
     def __init__(self, filename):
@@ -387,11 +409,6 @@ def show_menu():
             if e.type == pygame.QUIT: # exit on window close
                 menu = False
 
-        keys = pygame.key.get_pressed() # pressed keys
-        # close on esc
-        if keys[pygame.K_ESCAPE]:
-            menu = False
-
         screen.fill(bg_color) # update background color
         high_score_text.update() # update high score text
         pw.update(events) # update pygame_widgetes
@@ -408,6 +425,9 @@ def on_start_click():
 def on_skins_click():
     global menu
     global skin_index
+    global temp_skin_index
+    global skin_select_larrow
+    global skin_select_rarrow
     global skin_save_btn
     global skin_cancel_btn
     global skins_menu
@@ -416,6 +436,7 @@ def on_skins_click():
     global exit_btn
     global mouse_control_btn
     global is_dino_die_control_btn
+    temp_skin_index = skin_index
 
     # Delete menu buttons
     start_btn.hide()
@@ -424,7 +445,7 @@ def on_skins_click():
     mouse_control_btn.button.hide()
     is_dino_die_control_btn.button.hide()
 
-    # Initialize skins menu buttons
+    # initialize skins menu buttons
     if skin_save_btn == 0:
         skin_save_btn = MyButton((0,280,150,50), 'Save',
             on_skin_save).button
@@ -433,6 +454,14 @@ def on_skins_click():
     else:
         skin_save_btn.show()
         skin_cancel_btn.show()
+
+    # initialize skin select arrows
+    if skin_select_larrow == 0:
+        skin_select_larrow = SkinMenuArrow('left', on_larrow_click)
+        skin_select_rarrow = SkinMenuArrow('right', on_rarrow_click)
+    else:
+        skin_select_larrow.button.show()
+        skin_select_rarrow.button.show()
 
     dino_skin_menu = SkinMenuDino()
 
@@ -449,22 +478,50 @@ def on_skins_click():
 
         screen.fill(bg_color) # update background color
         pw.update(events) # update pygame_widgetes
+
         dino_skin_menu.show() # update dino skin image
+
         update_frame() # update frame
 
+def on_rarrow_click():
+    global temp_skin_index
+    global dino_skins
+
+    # change dino skin to next
+    if temp_skin_index < len(dino_skins) - 1:
+        temp_skin_index += 1
+
+def on_larrow_click():
+    global temp_skin_index
+
+    # change dino skin to previous
+    if temp_skin_index > 0:
+        temp_skin_index -= 1
+
 def on_skin_save():
-    hide_skin_buttons()
+    global skin_index
+    global temp_skin_index
+
+    skin_index = temp_skin_index # forward temp_skin_index to skin_index
+    print(f'Dino skin has been changed [new index - {skin_index}]') # info log
+    hide_skin_buttons() # hide skin menu buttons
+    show_menu() # show main menu
 
 def on_skin_cancel():
-    hide_skin_buttons()
-    show_menu()
+    hide_skin_buttons() # hide skin menu buttons
+    show_menu() # show main menu
 
 def hide_skin_buttons():
     global skin_save_btn
     global skin_cancel_btn
+    global skin_select_larrow
+    global skin_select_rarrow
 
+    # hide skin menu buttons
     skin_save_btn.hide()
     skin_cancel_btn.hide()
+    skin_select_larrow.button.hide()
+    skin_select_rarrow.button.hide()
 
 def on_exit_click():
     print('Game closed') # info log
@@ -542,16 +599,13 @@ def play():
     while game:
         for e in pygame.event.get():
             if e.type == pygame.QUIT: # exit on window close
-                game = False
-            if high_score < scores:
-                data.write_data('high_score', scores) # rewrite high score
+                end_game()
 
         keys = pygame.key.get_pressed() # pressed keys
         # close on esc
         if keys[pygame.K_ESCAPE]:
-            game = False
-            if high_score < scores:
-                data.write_data('high_score', scores) # rewrite high score
+            end_game()
+            show_menu()
         # movement
         if mouse_play:
             mx, _ = pygame.mouse.get_pos() # get current mouse position
