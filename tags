@@ -1,0 +1,79 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+Cloud	main.py	/^class Cloud:$/;"	c
+DamageFood	main.py	/^class DamageFood(Part):$/;"	c
+Dino	main.py	/^class Dino:$/;"	c
+DinoPart	main.py	/^class DinoPart(Part):$/;"	c
+File	main.py	/^class File:$/;"	c
+MyButton	main.py	/^class MyButton:$/;"	c
+Part	main.py	/^class Part:$/;"	c
+Text	main.py	/^class Text:$/;"	c
+__init__	main.py	/^    def __init__(self, dino, scores_text, health_text):$/;"	m	class:DamageFood
+__init__	main.py	/^    def __init__(self, dino, scores_text, health_text):$/;"	m	class:DinoPart
+__init__	main.py	/^    def __init__(self, dino, scores_text, health_text):$/;"	m	class:Part
+__init__	main.py	/^    def __init__(self, filename):$/;"	m	class:File
+__init__	main.py	/^    def __init__(self, params, text, on_click, font_size=30,$/;"	m	class:MyButton
+__init__	main.py	/^    def __init__(self, text, font_size, position):$/;"	m	class:Text
+__init__	main.py	/^    def __init__(self, x, y):$/;"	m	class:Cloud
+__init__	main.py	/^    def __init__(self, x, y):$/;"	m	class:Dino
+add_speed	main.py	/^    def add_speed(self, speed):$/;"	m	class:Dino
+app_icon	main.py	/^app_icon = pygame.image.load(f'{assets}\/icon.png') # find icon image$/;"	v
+assets	main.py	/^assets = f'{fullpath}\/assets' # assets directory$/;"	v
+bg_color	main.py	/^bg_color = (142,202,230) # background color$/;"	v
+change_speed	main.py	/^    def change_speed(self, new_speed):$/;"	m	class:Dino
+change_text	main.py	/^    def change_text(self, text):$/;"	m	class:Text
+data	main.py	/^data = 0 # temp start value for data$/;"	v
+data_path	main.py	/^data_path = f'{assets}\/.data.json' # data file path$/;"	v
+delete	main.py	/^    def delete(btn):$/;"	m	class:MyButton
+end_game	main.py	/^def end_game():$/;"	f
+exit_btn	main.py	/^exit_btn = 0 # menu exit button$/;"	v
+font_family	main.py	/^font_family = f'{assets}\/font.otf' # font path$/;"	v
+fullpath	main.py	/^fullpath = os.path.realpath(__file__) # get this script static path$/;"	v
+fullpath	main.py	/^fullpath = re.sub(r'\\\/(?!.*\\\/).*py', '', fullpath) # remove filename from path$/;"	v
+game	main.py	/^game = True # is game running$/;"	v
+get_params	main.py	/^    def get_params(self):$/;"	m	class:Dino
+health	main.py	/^health = 5 # game healths$/;"	v
+high_score	main.py	/^high_score = 0 # all time high score$/;"	v
+is_dino_die	main.py	/^is_dino_die = True # is dino die in game$/;"	v
+is_dino_die_control_btn	main.py	/^is_dino_die_control_btn = 0 # define the button for global use$/;"	v
+main	main.py	/^def main(argv):$/;"	f
+menu	main.py	/^menu = True # is menu showing$/;"	v
+mouse_control_btn	main.py	/^mouse_control_btn = 0 # define the button for global use$/;"	v
+mouse_play	main.py	/^mouse_play = True # is game runned in mouse mode$/;"	v
+move	main.py	/^    def move(self):$/;"	m	class:Cloud
+move	main.py	/^    def move(self):$/;"	m	class:Part
+move	main.py	/^    def move(self, direction):$/;"	m	class:Dino
+move_to_position	main.py	/^    def move_to_position(self, x):$/;"	m	class:Dino
+on_death_control_click	main.py	/^def on_death_control_click():$/;"	f
+on_exit_click	main.py	/^def on_exit_click():$/;"	f
+on_mouse_control_click	main.py	/^def on_mouse_control_click():$/;"	f
+on_part_bottom	main.py	/^    def on_part_bottom(self):$/;"	m	class:DamageFood
+on_part_bottom	main.py	/^    def on_part_bottom(self):$/;"	m	class:DinoPart
+on_part_bottom	main.py	/^    def on_part_bottom(self):$/;"	m	class:Part
+on_part_eat	main.py	/^    def on_part_eat(self):$/;"	m	class:DamageFood
+on_part_eat	main.py	/^    def on_part_eat(self):$/;"	m	class:DinoPart
+on_part_eat	main.py	/^    def on_part_eat(self):$/;"	m	class:Part
+on_skin_save	main.py	/^def on_skin_save():$/;"	f
+on_skins_click	main.py	/^def on_skins_click():$/;"	f
+on_start_click	main.py	/^def on_start_click():$/;"	f
+play	main.py	/^def play():$/;"	f
+play_time	main.py	/^play_time = 0 # game play time seconds$/;"	v
+read_data	main.py	/^    def read_data(self, key):$/;"	m	class:File
+reset	main.py	/^    def reset(self):$/;"	m	class:Part
+scores	main.py	/^scores = 0 # game scores$/;"	v
+screen	main.py	/^screen = pygame.display.set_mode(size) # init screen$/;"	v
+set_text	main.py	/^    def set_text(self, new_text):$/;"	m	class:MyButton
+show	main.py	/^    def show(self):$/;"	m	class:Dino
+show_menu	main.py	/^def show_menu():$/;"	f
+skins_btn	main.py	/^skins_btn = 0 # menu skins button$/;"	v
+skins_menu	main.py	/^skins_menu = False # is skins menu openned$/;"	v
+start_btn	main.py	/^start_btn = 0 # menu start button$/;"	v
+update	main.py	/^    def update(self):$/;"	m	class:Text
+update_dino_speed	main.py	/^def update_dino_speed(dino):$/;"	f
+update_frame	main.py	/^def update_frame():$/;"	f
+update_time	main.py	/^def update_time():$/;"	f
+write_data	main.py	/^    def write_data(self, key, value):$/;"	m	class:File

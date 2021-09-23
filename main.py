@@ -3,6 +3,7 @@
 import os
 import re
 import json
+import glob
 import random
 import _thread
 import sys, getopt
@@ -28,6 +29,7 @@ pygame.display.set_icon(app_icon) # set app icon
 
 menu = True # is menu showing
 game = True # is game running
+skins_menu = False # is skins menu openned
 mouse_play = True # is game runned in mouse mode
 is_dino_die = True # is dino die in game
 scores = 0 # game scores
@@ -35,13 +37,32 @@ high_score = 0 # all time high score
 play_time = 0 # game play time seconds
 health = 5 # game healths
 data = 0 # temp start value for data
+skin_index = 0 # default index of dino skins
 font_family = f'{assets}/font.otf' # font path
 mouse_control_btn = 0 # define the button for global use
 is_dino_die_control_btn = 0 # define the button for global use
+start_btn = 0 # menu start button
+skins_btn = 0 # menu skins button
+exit_btn = 0 # menu exit button
+skin_save_btn = 0 # skin menu save button
+skin_cancel_btn = 0 # skin menu cancel button
+dino_skins = {} # dino skins dict {name: path}
+dino_skins_path = glob.glob(f'{assets}/dino*') # all skins path
+
+# fill dino skins dict
+for i in range(len(dino_skins_path)):
+    skin_name = dino_skins_path[i]
+    dino_skins_path[i] = os.path.relpath(dino_skins_path[i], assets)
+    dino_skins_path[i] = dino_skins_path[i].split('.')[0]
+    dino_skins_path[i] = dino_skins_path[i].replace('_', ' ')
+    dino_skins_path[i] = dino_skins_path[i].title()
+    dino_skins[dino_skins_path[i]] = skin_name
+
+print(dino_skins)
 
 class Dino:
     def __init__(self, x, y):
-        self.image = pygame.image.load(f'{assets}/dino.png') # dino asset
+        self.image = pygame.image.load(f'{assets}/dino_classic.png')
         self.speed = 0.2 # dino speed
         self.x = x # dino x
         self.y = y # dino y
@@ -75,6 +96,10 @@ class Dino:
 
     def get_params(self):
         return self.x-20, self.y-50, self.x+50, self.y+100 # x, y, w, h
+
+    def change_skin(self, skin_path):
+        # change dino skin [color]
+        self.image = pygame.image.load(skin_path)
 
 class Cloud:
     def __init__(self, x, y):
@@ -253,6 +278,21 @@ class MyButton:
         )
         print(f'{self.text} button text changed {new_text}') # info log
 
+class SkinMenuDino:
+    def __init__(self):
+        dino_h = 100 # dino image height (px)
+        self.x = (width // 2) - (dino_h // 4) # screen center
+        self.y = (height // 2) - (dino_h // 1.2) # screen center
+
+    def show(self):
+        global skin_index
+        global dino_skins
+
+        title = list(dino_skins.keys())[skin_index] # title of the current skin
+        path = dino_skins[title] # asset path of dino skin
+        img = pygame.image.load(path)
+        screen.blit(img, (self.x,self.y))
+
 class File:
     def __init__(self, filename):
         self.filename = filename # set filename
@@ -311,6 +351,9 @@ def main(argv):
 
 def show_menu():
     global menu
+    global start_btn
+    global skins_btn
+    global exit_btn
     global mouse_play
     global mouse_control_btn
     global is_dino_die
@@ -318,15 +361,25 @@ def show_menu():
     menu = True
 
     # menu buttons initialization
-    start_btn = MyButton((0,120,150,50), 'Play', on_start_click).button
-    exit_btn = MyButton((0,180,150,50), 'Exit', on_exit_click).button
-    high_score_text = Text(f'High-Score: {high_score}', 24, ((width//2)-65,240))
-    mouse_control_btn = MyButton((width-150,10,140,30),
-        f'Mouse control: {mouse_play}', on_mouse_control_click,
-        font_size=18, radius=5, is_center=False)
-    is_dino_die_control_btn = MyButton((width-150,50,140,30),
-        f'Dino death: {is_dino_die}', on_death_control_click,
-        font_size=18, radius=5, is_center=False)
+    if start_btn == 0:
+        start_btn = MyButton((0,100,150,50), 'Play', on_start_click).button
+        skins_btn = MyButton((0,155,150,50), 'Skins', on_skins_click).button
+        exit_btn = MyButton((0,210,150,50), 'Exit', on_exit_click).button
+        mouse_control_btn = MyButton((width-150,10,140,30),
+            f'Mouse control: {mouse_play}', on_mouse_control_click,
+            font_size=18, radius=5, is_center=False)
+        is_dino_die_control_btn = MyButton((width-150,50,140,30),
+            f'Dino death: {is_dino_die}', on_death_control_click,
+            font_size=18, radius=5, is_center=False)
+    else:
+        start_btn.show()
+        skins_btn.show()
+        exit_btn.show()
+        mouse_control_btn.button.show()
+        is_dino_die_control_btn.button.show()
+
+    high_score_text = Text(f'High-Score: {high_score}', 24,
+        ((width//2)-65,260))
 
     while menu:
         events = pygame.event.get()
@@ -351,6 +404,67 @@ def on_start_click():
     print('Game started') # info log
     menu = False # stop menu
     play() # start game
+
+def on_skins_click():
+    global menu
+    global skin_index
+    global skin_save_btn
+    global skin_cancel_btn
+    global skins_menu
+    global start_btn
+    global skins_btn
+    global exit_btn
+    global mouse_control_btn
+    global is_dino_die_control_btn
+
+    # Delete menu buttons
+    start_btn.hide()
+    skins_btn.hide()
+    exit_btn.hide()
+    mouse_control_btn.button.hide()
+    is_dino_die_control_btn.button.hide()
+
+    # Initialize skins menu buttons
+    if skin_save_btn == 0:
+        skin_save_btn = MyButton((0,280,150,50), 'Save',
+            on_skin_save).button
+        skin_cancel_btn = MyButton((0,340,150,50), 'Cancel',
+            on_skin_cancel).button
+    else:
+        skin_save_btn.show()
+        skin_cancel_btn.show()
+
+    dino_skin_menu = SkinMenuDino()
+
+    while menu:
+        events = pygame.event.get()
+        for e in events:
+            if e.type == pygame.QUIT: # exit on window close
+                menu = False
+
+        keys = pygame.key.get_pressed() # pressed keys
+        # close on esc
+        if keys[pygame.K_ESCAPE]:
+            menu = False
+
+        screen.fill(bg_color) # update background color
+        pw.update(events) # update pygame_widgetes
+        dino_skin_menu.show() # update dino skin image
+        update_frame() # update frame
+
+def on_skin_save():
+    hide_skin_buttons()
+
+def on_skin_cancel():
+    hide_skin_buttons()
+    show_menu()
+
+def hide_skin_buttons():
+    global skin_save_btn
+    global skin_cancel_btn
+
+    skin_save_btn.hide()
+    skin_cancel_btn.hide()
 
 def on_exit_click():
     print('Game closed') # info log
