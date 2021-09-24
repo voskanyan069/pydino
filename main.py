@@ -32,6 +32,7 @@ game = True # is game running
 skins_menu = False # is skins menu openned
 mouse_play = True # is game runned in mouse mode
 is_dino_die = True # is dino die in game
+log_enabled = True # is logs output enabled
 scores = 0 # game scores
 high_score = 0 # all time high score
 play_time = 0 # game play time seconds
@@ -61,12 +62,10 @@ for i in range(len(dino_skins_path)):
     dino_skins_path[i] = dino_skins_path[i].title()
     dino_skins[dino_skins_path[i]] = skin_name
 
-print(dino_skins)
-
 class Dino:
     def __init__(self, x, y):
         path = list(dino_skins.values())[skin_index]
-        print(path)
+        info_log(path)
         self.image = pygame.image.load(path)
         self.speed = 0.2 # dino speed
         self.x = x # dino x
@@ -75,26 +74,26 @@ class Dino:
             'left': -1 * self.speed,
             'right': self.speed
         }
-        print(f'Created dino in [{x};{y}]') # info log
+        info_log(f'Created dino in [{x};{y}]') # info log
 
     def move(self, direction):
         if direction == 0 and self.x >= 5: # moved left
             self.x -= self.speed
         elif direction == 1 and self.x <= width-50: # moved right
             self.x += self.speed
-        print(f'Dino moved to [{self.x};{self.y}]') # info log
+        info_log(f'Dino moved to [{self.x};{self.y}]') # info log
 
     def move_to_position(self, x):
         self.x = x
-        print(f'Dino moved to [{self.x};{self.y}]') # info log
+        info_log(f'Dino moved to [{self.x};{self.y}]') # info log
 
     def add_speed(self, speed):
         self.speed += speed # add dino speed
-        print(f'Dino speed added by {speed}') # info log
+        info_log(f'Dino speed added by {speed}') # info log
 
     def change_speed(self, new_speed):
         self.speed = new_speed # set new speed
-        print(f'Dino speed changed - {new_speed}') # info log
+        info_log(f'Dino speed changed - {new_speed}') # info log
 
     def show(self):
         screen.blit(self.image, (self.x,self.y)) # show dino in x, y position
@@ -117,7 +116,7 @@ class Cloud:
         self.current_dir = self.direction['left'] # default start direction
         self.x = x # define x position
         self.y = y # define y position
-        print(f'Created cloud with speed {self.speed} in [{x};{y}]') # info log
+        info_log(f'Created cloud with speed {self.speed} in [{x};{y}]') # info log
 
     def move(self):
         if self.x <= 5: # if touch left border
@@ -137,7 +136,7 @@ class Part:
         self.x = random.randint(0, (width-self.part_w)) # start x point
         self.y = 0 # start y point
         self.dx, self.dy, self.dw, self.dh = 0, 0, 0, 0
-        print(f'Part was created at {self.x}') # info log
+        info_log(f'Part was created at {self.x}') # info log
 
     def reset(self):
         self.x = random.randint(0, (width-self.part_w)) # new random x position
@@ -236,7 +235,7 @@ class Text:
         self.font = pygame.font.Font(font_family, self.font_size) # font
         self.img = self.font.render(text, True, self.text_color) # rendered text
         self.position = position # text position
-        print(f'Created text - {text}') # info log
+        info_log(f'Created text - {text}') # info log
 
     def update(self):
         screen.blit(self.img, self.position) # update text to show
@@ -271,7 +270,7 @@ class MyButton:
             pressedColour=self.color_3, radius=self.radius,
             onClick=self.on_click
         )
-        print(f'{text} button cerated with {params} parameters') # info log
+        info_log(f'{text} button cerated with {params} parameters') # info log
 
     def set_text(self, new_text):
         self.button = Button( # override button
@@ -281,7 +280,7 @@ class MyButton:
             pressedColour=self.color_3, radius=self.radius,
             onClick=self.on_click
         )
-        print(f'{self.text} button text changed {new_text}') # info log
+        info_log(f'{self.text} button text changed {new_text}') # info log
 
 class SkinMenuDino:
     def __init__(self):
@@ -325,7 +324,7 @@ class File:
                 data = json.load(file) # save file data to variable
                 return data['data'][key] # get data value by key
         except FileNotFoundError as e: # if file not exist
-            print(f'{Fore.RED} [ERROR] {self.filename} file not found \
+            info_log(f'{Fore.RED} [ERROR] {self.filename} file not found \
                     {Style.RESET_ALL}') # error
     
     def write_data(self, key, value):
@@ -337,9 +336,9 @@ class File:
                 data['data'][key] = value # append data in datafile
                 json.dump(data, file, indent=4) # rewrite json file
                 file.close() # close data file
-            print(f'Data was writen [{new}]') # info log
+            info_log(f'Data was writen [{new}]') # info log
         except FileNotFoundError as e: # if file not exist
-            print(f'{Fore.RED} [ERROR] {self.filename} file not found \
+            info_log(f'{Fore.RED} [ERROR] {self.filename} file not found \
                     {Style.RESET_ALL}') # error
 
 def main(argv):
@@ -347,7 +346,8 @@ def main(argv):
     global high_score
 
     try:
-        opts, args = getopt.getopt(argv,"hc",["help","clear"]) # get args
+        opts, args = \
+                getopt.getopt(argv,"hcl",["help","clear","log"]) # get args
     except getopt.GetoptError: # if error on args getting
         print('\n\nUsage: dino.py -h/--help | to show help message') # help
         sys.exit(2) # exit app with error code 2
@@ -357,12 +357,16 @@ def main(argv):
             print('Dino'.center(80)) # print app name in terminal center
             print('\t-h/--help  - Show this help message') # show help usage
             print('\t-c/--clear - Clear data file') # show clear usage
+            print('\t-l/--log   - Log outputs to terminal') # show logs usage
             sys.exit(0) # exit without errors
-        elif opt == "-c" or opt == "--clear": # -c/--clear
+        elif opt == '-c' or opt == '--clear': # -c/--clear
             datafile = open(f'{assets}/.data.json', 'w') # open file for write
             datafile.write('{\n\t"data": {\n\t}\n}') # write this to file
             datafile.close() # close file
             sys.exit(0) # exit without errors
+        elif opt == '-l' or opt == '--log': # -l/--log
+            global log_enabled
+            log_enabled = True # set logs to terminal true
 
     data = File(data_path) # file of data
     try:
@@ -418,7 +422,7 @@ def show_menu():
 def on_start_click():
     global menu
 
-    print('Game started') # info log
+    info_log('Game started') # info log
     menu = False # stop menu
     play() # start game
 
@@ -503,7 +507,7 @@ def on_skin_save():
     global temp_skin_index
 
     skin_index = temp_skin_index # forward temp_skin_index to skin_index
-    print(f'Dino skin has been changed [new index - {skin_index}]') # info log
+    info_log(f'Dino skin has been changed [new index - {skin_index}]') # info log
     hide_skin_buttons() # hide skin menu buttons
     show_menu() # show main menu
 
@@ -524,7 +528,7 @@ def hide_skin_buttons():
     skin_select_rarrow.button.hide()
 
 def on_exit_click():
-    print('Game closed') # info log
+    info_log('Game closed') # info log
     # close the window
     pygame.quit() # close pygame
     quit() # close python
@@ -535,7 +539,7 @@ def on_mouse_control_click():
 
     mouse_play = not mouse_play # reverse mouse control option
     mouse_control_btn.set_text(f'Mouse control: {mouse_play}') # change text
-    print(f'Mouse control switched to {mouse_play}') # info log
+    info_log(f'Mouse control switched to {mouse_play}') # info log
 
 def on_death_control_click():
     global is_dino_die
@@ -543,7 +547,7 @@ def on_death_control_click():
 
     is_dino_die = not is_dino_die # reverse death option
     is_dino_die_control_btn.set_text(f'Dino death: {is_dino_die}') # change text
-    print(f'Dino death switched to {is_dino_die}') # info log
+    info_log(f'Dino death switched to {is_dino_die}') # info log
 
 def play():
     # game
@@ -653,7 +657,7 @@ def update_time():
 
     while game:
         play_time += 1 # add seconds by 1
-        print(f'Time updated - {play_time}') # info log
+        info_log(f'Time updated - {play_time}') # info log
         pygame.time.wait(1000) # sleep for 1 sec
 
 def update_dino_speed(dino):
@@ -664,6 +668,12 @@ def update_dino_speed(dino):
         pygame.time.wait(10000) # sleep for 10 sec
         dino.add_speed(0.1) # add dino speed by 0.1
         count += 1 # add count by 1
+
+def info_log(msg):
+    global log_enabled
+
+    if log_enabled:
+        print(f' [INFO] {msg}')
 
 if __name__ == '__main__':
     main(sys.argv[1:]) # send command-line arguments as parameter
