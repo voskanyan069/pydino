@@ -29,7 +29,6 @@ pygame.display.set_icon(app_icon) # set app icon
 
 menu = True # is menu showing
 game = True # is game running
-skins_menu = False # is skins menu openned
 mouse_play = True # is game runned in mouse mode
 is_dino_die = True # is dino die in game
 log_enabled = True # is logs output enabled
@@ -39,19 +38,26 @@ play_time = 0 # game play time seconds
 health = 5 # game healths
 data = 0 # temp start value for data
 skin_index = 0 # default index of dino skins
-temp_skin_index = 0 # temp index for changing in menu but not saving
+temp_skin_index = 0 # temp index for changing dino skin in menu but not saving
+part_skin_index = 0 # default index of part skins
+temp_part_skin_index = 0 # temp index for part skin in menu but not saving
 font_family = f'{assets}/font.otf' # font path
 mouse_control_btn = 0 # define the button for global use
 is_dino_die_control_btn = 0 # define the button for global use
+select_skin = 'dino' # which skin currently selected [default: dino]
 start_btn = 0 # menu start button
 skins_btn = 0 # menu skins button
 exit_btn = 0 # menu exit button
 skin_save_btn = 0 # skin menu save button
 skin_cancel_btn = 0 # skin menu cancel button
+dino_skin_menu = 0 # dino skin in skin menu
+select_skin_part = 0 # skin menu part skin select button
 skin_select_larrow = 0 # skin select left arrow image
 skin_select_rarrow = 0 # skin select right arrow image
 dino_skins = {} # dino skins dict {name: path}
-dino_skins_path = glob.glob(f'{assets}/dino*') # all skins path
+part_skins = {} # part skins dict {name: path}
+dino_skins_path = glob.glob(f'{assets}/dino*') # all dino skins path
+part_skins_path = glob.glob(f'{assets}/part*') # all part skins path
 
 # fill dino skins dict
 for i in range(len(dino_skins_path)):
@@ -61,6 +67,17 @@ for i in range(len(dino_skins_path)):
     dino_skins_path[i] = dino_skins_path[i].replace('_', ' ')
     dino_skins_path[i] = dino_skins_path[i].title()
     dino_skins[dino_skins_path[i]] = skin_name
+
+# fill part skins dict
+for i in range(len(part_skins_path)):
+    skin_name = part_skins_path[i]
+    part_skins_path[i] = os.path.relpath(part_skins_path[i], assets)
+    part_skins_path[i] = part_skins_path[i].split('.')[0]
+    part_skins_path[i] = part_skins_path[i].replace('_', ' ')
+    part_skins_path[i] = part_skins_path[i].title()
+    part_skins[part_skins_path[i]] = skin_name
+
+print(part_skins)
 
 class Dino:
     def __init__(self, x, y):
@@ -170,7 +187,8 @@ class Part:
 class DinoPart(Part):
     def __init__(self, dino, scores_text, health_text):
         super(DinoPart, self).__init__ (dino, scores_text, health_text)
-        self.image = pygame.image.load(f'{assets}/part.png') # cloud asset
+        path = list(part_skins.values())[part_skin_index]
+        self.image = pygame.image.load(path) # part asset
 
     def on_part_bottom(self):
         global game
@@ -201,7 +219,7 @@ class DinoPart(Part):
 class DamageFood(Part):
     def __init__(self, dino, scores_text, health_text):
         super(DamageFood, self).__init__ (dino, scores_text, health_text)
-        self.image = pygame.image.load(f'{assets}/damage.png') # cloud asset
+        self.image = pygame.image.load(f'{assets}/damage.png') # damage asset
 
     def on_part_bottom(self):
         self.reset() # delete this and create new part
@@ -226,16 +244,19 @@ class DamageFood(Part):
         self.reset() # delete this and create new part
 
 class Text:
-    def __init__(self, text, font_size, position):
+    def __init__(self, text, font_size, position, is_center=False):
         global font_family
         
         self.text = text # text to display
         self.font_size = font_size # font size
         self.text_color = (56,61,61) # text color
         self.font = pygame.font.Font(font_family, self.font_size) # font
-        self.img = self.font.render(text, True, self.text_color) # rendered text
-        self.position = position # text position
-        info_log(f'Created text - {text}') # info log
+        self.img = self.font.render(text, True, self.text_color) # render text
+        if is_center:
+            self.align_center(position) # align to x center
+        else:
+            self.position = position # text position
+        info_log(f'Created text - {text} [{self.position}]') # info log
 
     def update(self):
         screen.blit(self.img, self.position) # update text to show
@@ -244,9 +265,13 @@ class Text:
         self.text = text # rewrite displayed text
         self.img = self.font.render(text, True, self.text_color) # rendered text
 
+    def align_center(self, y_pos):
+        # center text in the screen width
+        self.position = self.img.get_rect(center=(width//2, y_pos))
+
 class MyButton:
     def __init__(self, params, text, on_click, font_size=30,
-            radius=10, is_center=True):
+            radius=10, is_center=True, image=False):
         global font_family
         
         self.btn_x = params[0] # button x position
@@ -254,8 +279,8 @@ class MyButton:
         self.btn_w = params[2] # button width
         self.btn_h = params[3] # button height
         self.radius = radius   # button corner radius
-        self.font = pygame.font.Font(font_family, font_size) # font family
         self.text = text # button text
+        self.font = pygame.font.Font(font_family, font_size) # font family
         self.on_click = on_click # on click method
         if is_center: # if button placed on center
             self.btn_x = (width // 2) - (self.btn_w // 2) # center button by x
@@ -270,16 +295,13 @@ class MyButton:
             pressedColour=self.color_3, radius=self.radius,
             onClick=self.on_click
         )
+        if image:
+            self.image = pygame.image.load(f'{assets}/{image}')
+            self.button.setImage(self.image)
         info_log(f'{text} button cerated with {params} parameters') # info log
 
     def set_text(self, new_text):
-        self.button = Button( # override button
-            screen, self.btn_x, self.btn_y, self.btn_w, self.btn_h,
-            text=new_text, font=self.font,
-            inactiveColour=self.color_1, hoverColour=self.color_2,
-            pressedColour=self.color_3, radius=self.radius,
-            onClick=self.on_click
-        )
+        self.button.set_text(new_text)
         info_log(f'{self.text} button text changed {new_text}') # info log
 
 class SkinMenuDino:
@@ -295,6 +317,22 @@ class SkinMenuDino:
         title = list(dino_skins.keys()) \
                 [temp_skin_index] # title of the current skin
         path = dino_skins[title] # asset path of dino skin
+        img = pygame.image.load(path)
+        screen.blit(img, (self.x,self.y))
+
+class SkinMenuPart:
+    def __init__(self):
+        part_h = 50 # dino image height (px)
+        self.x = (width // 2) - (part_h // 4) # screen center
+        self.y = (height // 2) - (part_h // 1.2) # screen center
+
+    def show(self):
+        global part_skin_index
+        global part_skins
+
+        title = list(part_skins.keys()) \
+                [temp_part_skin_index] # title of the current skin
+        path = part_skins[title] # asset path of dino skin
         img = pygame.image.load(path)
         screen.blit(img, (self.x,self.y))
 
@@ -428,19 +466,22 @@ def on_start_click():
 
 def on_skins_click():
     global menu
+    global select_skin
     global skin_index
     global temp_skin_index
     global skin_select_larrow
     global skin_select_rarrow
     global skin_save_btn
     global skin_cancel_btn
-    global skins_menu
+    global select_skin_dino
+    global select_skin_part
     global start_btn
     global skins_btn
     global exit_btn
     global mouse_control_btn
     global is_dino_die_control_btn
     temp_skin_index = skin_index
+    select_skin = 'dino'
 
     # Delete menu buttons
     start_btn.hide()
@@ -449,25 +490,39 @@ def on_skins_click():
     mouse_control_btn.button.hide()
     is_dino_die_control_btn.button.hide()
 
-    # initialize skins menu buttons
+    # initialize skin menu buttons if window openning first time
     if skin_save_btn == 0:
         skin_save_btn = MyButton((0,280,150,50), 'Save',
             on_skin_save).button
         skin_cancel_btn = MyButton((0,340,150,50), 'Cancel',
             on_skin_cancel).button
-    else:
-        skin_save_btn.show()
-        skin_cancel_btn.show()
-
-    # initialize skin select arrows
-    if skin_select_larrow == 0:
         skin_select_larrow = SkinMenuArrow('left', on_larrow_click)
         skin_select_rarrow = SkinMenuArrow('right', on_rarrow_click)
-    else:
+        select_skin_dino = MyButton(
+                (width-120,10,50,50), None,
+                on_select_dino_skin_click, is_center=False,
+                image='skin_dino.png'
+            )
+        select_skin_part = MyButton(
+                (width-60,10,50,50), None,
+                on_select_part_skin_click, is_center=False,
+                image='skin_part.png'
+            )
+    else: # show buttons if its already initialized
+        skin_save_btn.show()
+        skin_cancel_btn.show()
         skin_select_larrow.button.show()
         skin_select_rarrow.button.show()
+        select_skin_dino.button.show()
+        select_skin_part.button.show()
 
     dino_skin_menu = SkinMenuDino()
+    dino_skin_name = Text(
+            list(dino_skins.keys())[temp_skin_index], # skin name
+            25, # font size
+            80, # y position
+            is_center=True # is centered text
+        )
 
     while menu:
         events = pygame.event.get()
@@ -478,36 +533,147 @@ def on_skins_click():
         keys = pygame.key.get_pressed() # pressed keys
         # close on esc
         if keys[pygame.K_ESCAPE]:
-            menu = False
+            on_skin_cancel()
 
         screen.fill(bg_color) # update background color
         pw.update(events) # update pygame_widgetes
+        
+        # update skin title
+        dino_skin_name.change_text(list(dino_skins.keys())[temp_skin_index])
+        dino_skin_name.align_center(80)
 
         dino_skin_menu.show() # update dino skin image
+        dino_skin_name.update() # update dino skin name
+
+        update_frame() # update frame
+
+def on_select_part_skin_click():
+    global menu
+    global temp_part_skin_index
+    global skin_select_larrow
+    global skin_select_rarrow
+    global skin_save_btn
+    global skin_cancel_btn
+    global select_skin
+
+    select_skin = 'part'
+    part_skin_menu = SkinMenuPart()
+    part_skin_name = Text(
+            list(part_skins.keys())[temp_part_skin_index], # skin name
+            25, # font size
+            80, # y position
+            is_center=True # is centered text
+        )
+
+    while menu:
+        events = pygame.event.get()
+        for e in events:
+            if e.type == pygame.QUIT: # exit on window close
+                menu = False
+
+        keys = pygame.key.get_pressed() # pressed keys
+        # close on esc
+        if keys[pygame.K_ESCAPE]:
+            on_skin_cancel()
+
+        screen.fill(bg_color) # update background color
+        pw.update(events) # update pygame_widgetes
+        
+        # update skin title
+        part_skin_name.change_text(list(part_skins.keys()) \
+                [temp_part_skin_index])
+        part_skin_name.align_center(80)
+
+        part_skin_menu.show() # update part skin image
+        part_skin_name.update() # update part skin name
+
+        update_frame() # update frame
+
+def on_select_dino_skin_click():
+    global menu
+    global temp_skin_index
+    global skin_select_larrow
+    global skin_select_rarrow
+    global skin_save_btn
+    global skin_cancel_btn
+    global select_skin
+    global select_skin_dino
+
+    select_skin = 'dino'
+    skin_menu = SkinMenuDino()
+    skin_name = Text(
+            list(dino_skins.keys())[temp_skin_index], # skin name
+            25, # font size
+            80, # y position
+            is_center=True # is centered text
+        )
+
+    while menu:
+        events = pygame.event.get()
+        for e in events:
+            if e.type == pygame.QUIT: # exit on window close
+                menu = False
+
+        keys = pygame.key.get_pressed() # pressed keys
+        # close on esc
+        if keys[pygame.K_ESCAPE]:
+            on_skin_cancel()
+
+        screen.fill(bg_color) # update background color
+        pw.update(events) # update pygame_widgetes
+        
+        # update skin title
+        skin_name.change_text(list(dino_skins.keys())[temp_skin_index])
+        skin_name.align_center(80)
+
+        skin_menu.show() # update dino skin image
+        skin_name.update() # update dino skin name
 
         update_frame() # update frame
 
 def on_rarrow_click():
+    global select_skin
     global temp_skin_index
+    global temp_part_skin_index
     global dino_skins
+    global part_skins
 
-    # change dino skin to next
-    if temp_skin_index < len(dino_skins) - 1:
-        temp_skin_index += 1
+    # check which skin was changing
+    if select_skin == 'dino':
+        # change dino skin to next
+        if temp_skin_index < len(dino_skins) - 1:
+            temp_skin_index += 1
+    elif select_skin == 'part':
+        # change part skin to prvious
+        if temp_part_skin_index < len(part_skins) - 1:
+            temp_part_skin_index += 1
 
 def on_larrow_click():
+    global select_skin
     global temp_skin_index
+    global temp_part_skin_index
 
-    # change dino skin to previous
-    if temp_skin_index > 0:
-        temp_skin_index -= 1
+    # check which skin was changing
+    if select_skin == 'dino':
+        # change dino skin to previous
+        if temp_skin_index > 0:
+            temp_skin_index -= 1
+    elif select_skin == 'part':
+        # change part skin to prvious
+        if temp_part_skin_index > 0:
+            temp_part_skin_index -= 1
 
 def on_skin_save():
     global skin_index
     global temp_skin_index
+    global part_skin_index
+    global temp_part_skin_index
 
-    skin_index = temp_skin_index # forward temp_skin_index to skin_index
-    info_log(f'Dino skin has been changed [new index - {skin_index}]') # info log
+    # forward temp index to index
+    skin_index = temp_skin_index 
+    part_skin_index = temp_part_skin_index
+    info_log(f'D skin has been changed [{skin_index}]') # info log
+    info_log(f'P skin has been changed [{part_skin_index}]') # info log
     hide_skin_buttons() # hide skin menu buttons
     show_menu() # show main menu
 
@@ -520,12 +686,16 @@ def hide_skin_buttons():
     global skin_cancel_btn
     global skin_select_larrow
     global skin_select_rarrow
+    global select_skin_dino
+    global select_skin_part
 
     # hide skin menu buttons
     skin_save_btn.hide()
     skin_cancel_btn.hide()
     skin_select_larrow.button.hide()
     skin_select_rarrow.button.hide()
+    select_skin_dino.button.hide()
+    select_skin_part.button.hide()
 
 def on_exit_click():
     info_log('Game closed') # info log
@@ -626,7 +796,7 @@ def play():
             cloud.move() # move cloud to current possible direction
         for part in parts: # loop all parts
             part.move() # start part movement
-        
+
         # refresh texts
         scores_text.update() # refresh scores
         time_text.update() # refresh time
