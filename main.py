@@ -11,7 +11,7 @@ from colorama import Fore, Style
 
 import pygame
 import pygame_widgets as pw
-from pygame_widgets.button import Button
+from mymodules.button import Button
 
 pygame.init() # init pygame
 
@@ -76,8 +76,6 @@ for i in range(len(part_skins_path)):
     part_skins_path[i] = part_skins_path[i].replace('_', ' ')
     part_skins_path[i] = part_skins_path[i].title()
     part_skins[part_skins_path[i]] = skin_name
-
-print(part_skins)
 
 class Dino:
     def __init__(self, x, y):
