@@ -77,6 +77,17 @@ for i in range(len(part_skins_path)):
     part_skins_path[i] = part_skins_path[i].title()
     part_skins[part_skins_path[i]] = skin_name
 
+# swap skins indexes of the dict
+def swap_skins(dict_, i, j):
+    temp = list(dict_.items())
+    temp[i], temp[j] = temp[j], temp[i]
+    return dict(temp)
+
+dino_cl = list(dino_skins.keys()).index('Dino Classic') # classic dino index
+part_cl = list(part_skins.keys()).index('Part Classic') # classic part index
+dino_skins = swap_skins(dino_skins, dino_cl, 0) # swap dino [0] and classic
+part_skins = swap_skins(part_skins, part_cl, 0) # swap part [0] and classic
+
 class Dino:
     def __init__(self, x, y):
         path = list(dino_skins.values())[skin_index]
@@ -466,7 +477,9 @@ def on_skins_click():
     global menu
     global select_skin
     global skin_index
+    global part_skin_index
     global temp_skin_index
+    global temp_part_skin_index
     global skin_select_larrow
     global skin_select_rarrow
     global skin_save_btn
@@ -479,6 +492,7 @@ def on_skins_click():
     global mouse_control_btn
     global is_dino_die_control_btn
     temp_skin_index = skin_index
+    temp_part_skin_index = part_skin_index
     select_skin = 'dino'
 
     # Delete menu buttons
