@@ -49,6 +49,10 @@ temp_part_skin_index = 0 # temp index for part skin in menu but not saving
 font_family = f'{assets}/font.otf' # font path
 mouse_control_btn = 0 # define the button for global use
 is_dino_die_control_btn = 0 # define the button for global use
+level_index = 0 # game difficulty index
+level_difficulty = {0: 'Easy', 1: 'Medium', 2: 'Hard'} # difficulty
+game_difficulty = level_difficulty[0] # set game_difficulty easy by default
+level_control_btn = 0 # level changing control button
 select_skin = 'dino' # which skin currently selected [default: dino]
 parts = [] # list of parts
 start_btn = 0 # menu start button
@@ -437,6 +441,8 @@ def show_menu():
     global mouse_control_btn
     global is_dino_die
     global is_dino_die_control_btn
+    global game_difficulty
+    global level_control_btn
     menu = True
 
     # menu buttons initialization
@@ -450,12 +456,16 @@ def show_menu():
         is_dino_die_control_btn = MyButton((width-150,50,140,30),
             f'Dino death: {is_dino_die}', on_death_control_click,
             font_size=18, radius=5, is_center=False)
+        level_control_btn = MyButton((width-150,90,140,30),
+            f'Difficulty: {game_difficulty}', on_level_control_click,
+            font_size=18, radius=5, is_center=False)
     else:
         start_btn.show()
         skins_btn.show()
         exit_btn.show()
         mouse_control_btn.button.show()
         is_dino_die_control_btn.button.show()
+        level_control_btn.button.show()
 
     high_score_text = Text(f'High-Score: {high_score}', 24,
         ((width//2)-65,260))
@@ -497,6 +507,7 @@ def on_skins_click():
     global exit_btn
     global mouse_control_btn
     global is_dino_die_control_btn
+    global level_control_btn
     temp_skin_index = skin_index
     temp_part_skin_index = part_skin_index
     select_skin = 'dino'
@@ -507,6 +518,7 @@ def on_skins_click():
     exit_btn.hide()
     mouse_control_btn.button.hide()
     is_dino_die_control_btn.button.hide()
+    level_control_btn.button.hide()
 
     # initialize skin menu buttons if window openning first time
     if skin_save_btn == 0:
@@ -737,6 +749,23 @@ def on_death_control_click():
     is_dino_die_control_btn.set_text(f'Dino death: {is_dino_die}') # change text
     info_log(f'Dino death switched to {is_dino_die}')
 
+def on_level_control_click():
+    global game_difficulty
+    global level_index
+    global level_difficulty
+    global level_control_btn
+
+    # get index of selected level
+    level_index = list(level_difficulty.keys()) \
+            [list(level_difficulty.values()).index(game_difficulty)]
+
+    level_index += 1 # add difficulty by 1
+    if level_index > 2: # reset difficulty if it greate than 2
+        level_index = 0
+    game_difficulty = level_difficulty[level_index]  # set next difficulty
+    level_control_btn.set_text(f'Difficulty: {game_difficulty}') # change text
+    info_log(f'Game level difficulty changed {game_difficulty}')
+
 def play():
     # game
     global game
@@ -747,6 +776,7 @@ def play():
     global play_time
     global mouse_play
     global is_dino_die
+    global level_index
 
     # reset game options
     game = True
@@ -779,9 +809,9 @@ def play():
 
     # parts
     parts = []
-    for i in range(random.randint(2, 4)): # create 3-5 parts
+    for i in range(random.randint(2, 4)+(level_index*2)): # create parts
         _thread.start_new_thread(create_part, (dino,scores_text,health_text,))
-    for i in range(random.randint(1, 2)): # create 2-3 mines
+    for i in range(random.randint(1, 2)+(level_index*2)): # create enemies
         _thread.start_new_thread(create_enemy, (dino,scores_text,health_text,))
 
     # launch new threads
