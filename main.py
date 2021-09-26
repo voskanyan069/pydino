@@ -15,18 +15,23 @@ from mymodules.button import Button
 
 pygame.init() # init pygame
 
+# window settings
 size = width, height = 640, 400 # screen size
 screen = pygame.display.set_mode(size) # init screen
 bg_color = (142,202,230) # background color
+
+# paths
 fullpath = os.path.realpath(__file__) # get this script static path
 fullpath = re.sub(r'\/(?!.*\/).*py', '', fullpath) # remove filename from path
 assets = f'{fullpath}/assets' # assets directory
 data_path = f'{assets}/.data.json' # data file path
 
+# app settings
 app_icon = pygame.image.load(f'{assets}/icon.png') # find icon image
 pygame.display.set_caption('Dino') # set window title
 pygame.display.set_icon(app_icon) # set app icon
 
+# global variables
 menu = True # is menu showing
 game = True # is game running
 mouse_play = True # is game runned in mouse mode
@@ -45,6 +50,7 @@ font_family = f'{assets}/font.otf' # font path
 mouse_control_btn = 0 # define the button for global use
 is_dino_die_control_btn = 0 # define the button for global use
 select_skin = 'dino' # which skin currently selected [default: dino]
+parts = [] # list of parts
 start_btn = 0 # menu start button
 skins_btn = 0 # menu skins button
 exit_btn = 0 # menu exit button
@@ -83,6 +89,7 @@ def swap_skins(dict_, i, j):
     temp[i], temp[j] = temp[j], temp[i]
     return dict(temp)
 
+# move classic skin to [0] in dict
 dino_cl = list(dino_skins.keys()).index('Dino Classic') # classic dino index
 part_cl = list(part_skins.keys()).index('Part Classic') # classic part index
 dino_skins = swap_skins(dino_skins, dino_cl, 0) # swap dino [0] and classic
@@ -91,7 +98,6 @@ part_skins = swap_skins(part_skins, part_cl, 0) # swap part [0] and classic
 class Dino:
     def __init__(self, x, y):
         path = list(dino_skins.values())[skin_index]
-        info_log(path)
         self.image = pygame.image.load(path)
         self.speed = 0.2 # dino speed
         self.x = x # dino x
@@ -100,26 +106,26 @@ class Dino:
             'left': -1 * self.speed,
             'right': self.speed
         }
-        info_log(f'Created dino in [{x};{y}]') # info log
+        info_log(f'Created dino in [{x};{y}]')
 
     def move(self, direction):
         if direction == 0 and self.x >= 5: # moved left
             self.x -= self.speed
         elif direction == 1 and self.x <= width-50: # moved right
             self.x += self.speed
-        info_log(f'Dino moved to [{self.x};{self.y}]') # info log
+        info_log(f'Dino moved to [{self.x};{self.y}]')
 
     def move_to_position(self, x):
         self.x = x
-        info_log(f'Dino moved to [{self.x};{self.y}]') # info log
+        #info_log(f'Dino moved to [{self.x};{self.y}]')
 
     def add_speed(self, speed):
         self.speed += speed # add dino speed
-        info_log(f'Dino speed added by {speed}') # info log
+        info_log(f'Dino speed added by {speed}')
 
     def change_speed(self, new_speed):
         self.speed = new_speed # set new speed
-        info_log(f'Dino speed changed - {new_speed}') # info log
+        info_log(f'Dino speed changed - {new_speed}')
 
     def show(self):
         screen.blit(self.image, (self.x,self.y)) # show dino in x, y position
@@ -142,7 +148,7 @@ class Cloud:
         self.current_dir = self.direction['left'] # default start direction
         self.x = x # define x position
         self.y = y # define y position
-        info_log(f'Created cloud with speed {self.speed} in [{x};{y}]') # info log
+        info_log(f'Created cloud with speed {self.speed} in [{x};{y}]')
 
     def move(self):
         if self.x <= 5: # if touch left border
@@ -162,7 +168,7 @@ class Part:
         self.x = random.randint(0, (width-self.part_w)) # start x point
         self.y = 0 # start y point
         self.dx, self.dy, self.dw, self.dh = 0, 0, 0, 0
-        info_log(f'Part was created at {self.x}') # info log
+        info_log(f'Part was created at {self.x}')
 
     def reset(self):
         self.x = random.randint(0, (width-self.part_w)) # new random x position
@@ -265,7 +271,7 @@ class Text:
             self.align_center(position) # align to x center
         else:
             self.position = position # text position
-        info_log(f'Created text - {text} [{self.position}]') # info log
+        info_log(f'Created text - {text} [{self.position}]')
 
     def update(self):
         screen.blit(self.img, self.position) # update text to show
@@ -307,11 +313,11 @@ class MyButton:
         if image:
             self.image = pygame.image.load(f'{assets}/{image}')
             self.button.setImage(self.image)
-        info_log(f'{text} button cerated with {params} parameters') # info log
+        info_log(f'{text} button cerated with {params} parameters')
 
     def set_text(self, new_text):
         self.button.set_text(new_text)
-        info_log(f'{self.text} button text changed {new_text}') # info log
+        info_log(f'{self.text} button text changed {new_text}')
 
 class SkinMenuDino:
     def __init__(self):
@@ -383,7 +389,7 @@ class File:
                 data['data'][key] = value # append data in datafile
                 json.dump(data, file, indent=4) # rewrite json file
                 file.close() # close data file
-            info_log(f'Data was writen [{new}]') # info log
+            info_log(f'Data was writen [{new}]')
         except FileNotFoundError as e: # if file not exist
             info_log(f'{Fore.RED} [ERROR] {self.filename} file not found \
                     {Style.RESET_ALL}') # error
@@ -469,7 +475,7 @@ def show_menu():
 def on_start_click():
     global menu
 
-    info_log('Game started') # info log
+    info_log('Game started')
     menu = False # stop menu
     play() # start game
 
@@ -684,8 +690,8 @@ def on_skin_save():
     # forward temp index to index
     skin_index = temp_skin_index 
     part_skin_index = temp_part_skin_index
-    info_log(f'D skin has been changed [{skin_index}]') # info log
-    info_log(f'P skin has been changed [{part_skin_index}]') # info log
+    info_log(f'D skin has been changed [{skin_index}]')
+    info_log(f'P skin has been changed [{part_skin_index}]')
     hide_skin_buttons() # hide skin menu buttons
     show_menu() # show main menu
 
@@ -710,7 +716,7 @@ def hide_skin_buttons():
     select_skin_part.button.hide()
 
 def on_exit_click():
-    info_log('Game closed') # info log
+    info_log('Game closed')
     # close the window
     pygame.quit() # close pygame
     quit() # close python
@@ -721,7 +727,7 @@ def on_mouse_control_click():
 
     mouse_play = not mouse_play # reverse mouse control option
     mouse_control_btn.set_text(f'Mouse control: {mouse_play}') # change text
-    info_log(f'Mouse control switched to {mouse_play}') # info log
+    info_log(f'Mouse control switched to {mouse_play}')
 
 def on_death_control_click():
     global is_dino_die
@@ -729,11 +735,12 @@ def on_death_control_click():
 
     is_dino_die = not is_dino_die # reverse death option
     is_dino_die_control_btn.set_text(f'Dino death: {is_dino_die}') # change text
-    info_log(f'Dino death switched to {is_dino_die}') # info log
+    info_log(f'Dino death switched to {is_dino_die}')
 
 def play():
     # game
     global game
+    global parts
     global health
     global scores
     global high_score
@@ -771,11 +778,11 @@ def play():
         health_text = None # health text temp value for parts
 
     # parts
-    parts = [] # list of parts
+    parts = []
     for i in range(random.randint(2, 4)): # create 3-5 parts
-        parts.append(DinoPart(dino, scores_text, health_text)) # add new part
+        _thread.start_new_thread(create_part, (dino,scores_text,health_text,))
     for i in range(random.randint(1, 2)): # create 2-3 mines
-        parts.append(DamageFood(dino, scores_text, health_text)) # add new mine
+        _thread.start_new_thread(create_enemy, (dino,scores_text,health_text,))
 
     # launch new threads
     _thread.start_new_thread(update_time, ()) # play time thread
@@ -830,18 +837,39 @@ def end_game():
         high_score = scores # update high score
     scores = 0 # reset scores
 
+# creating dino part objects after random time
+def create_part(dino, scores_text, health_text):
+    global parts
+
+    sleep_time = random.randint(0, 4) # random time in ms
+    pygame.time.wait(sleep_time * 1000) # sleep ms*1000 for sec
+    parts.append(DinoPart(dino, scores_text, health_text)) # add part to list
+    info_log(f'Created part [{len(parts)}]')
+
+# creating enemy objects after random time
+def create_enemy(dino, scores_text, health_text):
+    global parts
+
+    sleep_time = random.randint(0, 4) # random time in ms
+    pygame.time.wait(sleep_time * 1000) # sleep ms*1000 for sec
+    parts.append(DamageFood(dino, scores_text, health_text)) # add to list
+    info_log(f'Created enemy [{len(parts)}]')
+
+# refresh fps
 def update_frame():
     pygame.display.update() # update frame
 
+# update game time
 def update_time():
     global game
     global play_time
 
     while game:
         play_time += 1 # add seconds by 1
-        info_log(f'Time updated - {play_time}') # info log
+        info_log(f'Time updated - {play_time}')
         pygame.time.wait(1000) # sleep for 1 sec
 
+# update dino speed every 10 sec (keyboard control only)
 def update_dino_speed(dino):
     global game
     count = 0 # how many times speed added
@@ -851,6 +879,7 @@ def update_dino_speed(dino):
         dino.add_speed(0.1) # add dino speed by 0.1
         count += 1 # add count by 1
 
+# info log
 def info_log(msg):
     global log_enabled
 
